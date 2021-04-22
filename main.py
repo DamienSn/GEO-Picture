@@ -101,19 +101,36 @@ class App:
             self.toolbox, text="Remove", command=self.remove_image)
         self.rm_btn.grid(column=1, row=2)
 
+        self.tree_frame = Frame(self.toolbox)
+        self.tree_frame.grid(column=0, row=3, columnspan=2, sticky=NSEW)
+        
+        # Treeview scrollbar
+        self.tree_scroll = Scrollbar(self.tree_frame)
+        self.tree_scroll.pack(side=RIGHT, fill=Y)
+
+        # Scrollbar X axis
+        self.tree_scroll_x = Scrollbar(self.tree_frame, orient='horizontal')
+        self.tree_scroll_x.pack(side=BOTTOM, fill=X)
 
         # Treeview to view opened images
-        self.batch_tree = ttk.Treeview(self.toolbox, columns=('files', 'done', 'path'))
-        # Columns
+        self.batch_tree = ttk.Treeview(self.tree_frame, columns=('files', 'done', 'path'), yscrollcommand=self.tree_scroll.set, xscrollcommand=self.tree_scroll_x.set)
+        
+        # Configure scrollbar
+        self.tree_scroll.config(command=self.batch_tree.yview)
+        self.tree_scroll_x.config(command=self.batch_tree.xview)
+
+        # Columns of treeview
         self.batch_tree.column('done', width=80)
         self.batch_tree.column('#0', width=0, stretch=NO)
         # Headings
         self.batch_tree.heading('#0', text="ID")
-        self.batch_tree.heading('files', text="Fichiers")
-        self.batch_tree.heading('done', text="Etat")
-        self.batch_tree.heading('path', text="Chemin")
+        self.batch_tree.heading('files', text="Files")
+        self.batch_tree.heading('done', text="State")
+        self.batch_tree.heading('path', text="Path")
 
-        self.batch_tree.grid(column=0, row=3, columnspan=2, sticky=NSEW)
+        self.batch_tree.bind('<Button-1>', self.display_item)
+
+        self.batch_tree.pack()
 
         # Button to bind gpx to image
         self.gpx_btn = ttk.Button(
@@ -162,6 +179,11 @@ class App:
             except:
                 img[1] = 'Error'
                 self.batch_tree.item(item, text="", values=img)
+
+    def display_item(self):
+        current = self.batch_tree.focus()
+        item = self.batch_tree.item(current)['values'][2]
+        
 
     # For read exif date metadatas
     def read_exif(self, img):
