@@ -128,7 +128,7 @@ class App:
         self.batch_tree.heading('done', text="State")
         self.batch_tree.heading('path', text="Path")
 
-        self.batch_tree.bind('<Button-1>', self.display_item)
+        self.batch_tree.bind('<Double-Button-1>', self.display_item)
 
         self.batch_tree.pack()
 
@@ -181,13 +181,17 @@ class App:
                 self.batch_tree.item(item, text="", values=img)
 
     def display_item(self, event):
+        print('double click')
         current = self.batch_tree.focus()
-        item = self.batch_tree.item(current)['values']
-        print(item)
+        item = self.batch_tree.item(current)['values'][2]
+    
+        img_loaded = Image.open(item)
+        img_loaded = img_loaded.resize(
+            (300, 300), Image.ANTIALIAS)
+        img_loaded = ImageTk.PhotoImage(img_loaded)
 
-        image = PhotoImage(file=item)
-        self.canvas.create_image(150, 150, image)
-        
+        self.preview_canvas.create_image(150, 150, image=img_loaded)
+        self.preview_canvas.image = img_loaded
 
     # For read exif date metadatas
     def read_exif(self, img):
