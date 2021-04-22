@@ -66,15 +66,15 @@ class App:
         self.preview_title.grid(column=0, row=0, sticky=NSEW)
 
         # Canvas to have preview of choosen picture
-        self.preview_canvas = Canvas(self.preview, width=300, height=300)
+        self.preview_canvas = Canvas(self.preview, width=533, height=300)
         self.preview_canvas.grid(column=0, row=1, sticky=NSEW)
 
         # Load image if not image is choosen
         self.base_img = Image.open('assets/logo.png')
-        self.base_img = self.base_img.resize((300, 300), Image.ANTIALIAS)
+        self.base_img = self.base_img.resize((int(533/2), 300), Image.ANTIALIAS)
         self.base_img = ImageTk.PhotoImage(self.base_img)
 
-        self.preview_canvas.create_image(150, 150, image=self.base_img)
+        self.preview_canvas.create_image(int(533/2), 150, image=self.base_img)
 
         # Label with image filename
         self.image_label = ttk.Label(
@@ -186,11 +186,17 @@ class App:
         item = self.batch_tree.item(current)['values'][2]
     
         img_loaded = Image.open(item)
-        img_loaded = img_loaded.resize(
-            (300, 300), Image.ANTIALIAS)
+        # img_loaded = img_loaded.resize(
+        #     (int(533/2), 300), Image.ANTIALIAS)
+        # img_loaded = ImageTk.PhotoImage(img_loaded)
+        basewidth = 533
+        wpercent = (basewidth / float(img_loaded.size[0]))
+
+        hsize = int((float(img_loaded.size[1]) * float(wpercent)))
+        img_loaded = img_loaded.resize((basewidth, hsize), Image.ANTIALIAS)
         img_loaded = ImageTk.PhotoImage(img_loaded)
 
-        self.preview_canvas.create_image(150, 150, image=img_loaded)
+        self.preview_canvas.create_image(int(533/2), 150, image=img_loaded)
         self.preview_canvas.image = img_loaded
 
     # For read exif date metadatas
