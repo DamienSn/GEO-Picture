@@ -9,12 +9,11 @@ from pprint import pprint
 import datetime
 import bs4
 import xml.etree.ElementTree as ET
-import exifread
-
 
 class App:
     def __init__(self):
         self.root = Tk()
+        self.images = []
 
     def set_window_properties(self):
         # Set window title
@@ -58,25 +57,6 @@ class App:
             self.header, text="GEO Picture", font=self.title_font)
         self.title.grid(column=0, row=1)
 
-        # Add title to toolbox
-        self.toolbox_label = ttk.Label(
-            self.toolbox, text="Toolbox", font=['TkDefaultFont', 15])
-        self.toolbox_label.grid(column=0, row=0, columnspan=2)
-
-        # Button to open image
-        self.image_btn = ttk.Button(self.toolbox, text="Open image", command=self.open_image)
-        self.image_btn.grid(column=0, row=1)
-
-        # Button to bind gpx to image
-        self.gpx_btn = ttk.Button(
-            self.toolbox, text="Bind GPX", state=DISABLED, command=self.open_gpx)
-        self.gpx_btn.grid(column=1, row=1)
-
-        # Create progress bar for display steps of processing
-        self.progress_bar = ttk.Progressbar(
-            self.toolbox, orient=HORIZONTAL, length=150, mode='determinate')
-        self.progress_bar.grid(column=0, row=2, columnspan=2, sticky=NSEW)
-
         # Separator between toolbox and preview
         self.separator = ttk.Separator(self.root, orient=VERTICAL)
         self.separator.grid(column=1, row=1)
@@ -101,9 +81,121 @@ class App:
             self.preview, text="Open an image to enable preview")
         self.image_label.grid(column=0, row=2)
 
+    def create_toolbox(self):
+        # Add title to toolbox
+        self.toolbox_label = ttk.Label(
+            self.toolbox, text="Toolbox", font=['TkDefaultFont', 15])
+        self.toolbox_label.grid(column=0, row=0, columnspan=2)
+
+        # Label
+        ttk.Label(self.toolbox, text="Open images", font=[
+                  'TkDefaultFont', 11]).grid(row=1, column=0, columnspan=2)
+
+        # Button to open image
+        self.image_btn = ttk.Button(
+            self.toolbox, text="Add", command=self.open_image)
+        self.image_btn.grid(column=0, row=2)
+
+        # Button to remove image
+        self.rm_btn = ttk.Button(
+            self.toolbox, text="Remove", command=self.remove_image)
+        self.rm_btn.grid(column=1, row=2)
+
+        self.tree_frame = Frame(self.toolbox)
+        self.tree_frame.grid(column=0, row=3, columnspan=2, sticky=NSEW)
+        
+        # Treeview scrollbar
+        self.tree_scroll = Scrollbar(self.tree_frame)
+        self.tree_scroll.pack(side=RIGHT, fill=Y)
+
+        # Scrollbar X axis
+        self.tree_scroll_x = Scrollbar(self.tree_frame, orient='horizontal')
+        self.tree_scroll_x.pack(side=BOTTOM, fill=X)
+
+        # Treeview to view opened images
+        self.batch_tree = ttk.Treeview(self.tree_frame, columns=('files', 'done', 'path'), yscrollcommand=self.tree_scroll.set, xscrollcommand=self.tree_scroll_x.set)
+        
+        # Configure scrollbar
+        self.tree_scroll.config(command=self.batch_tree.yview)
+        self.tree_scroll_x.config(command=self.batch_tree.xview)
+
+        # Columns of treeview
+        self.batch_tree.column('done', width=80)
+        self.batch_tree.column('#0', width=0, stretch=NO)
+        # Headings
+        self.batch_tree.heading('#0', text="ID")
+        self.batch_tree.heading('files', text="Files")
+        self.batch_tree.heading('done', text="State")
+        self.batch_tree.heading('path', text="Path")
+
+        self.batch_tree.bind('<Double-Button-1>', self.display_item)
+
+        self.batch_tree.pack()
+
+        # Button to bind gpx to image
+        self.gpx_btn = ttk.Button(
+            self.toolbox, text="Bind GPX", command=self.open_gpx)
+        self.gpx_btn.grid(column=0, row=4)
+
+        # Button to process
+        self.process_btn = ttk.Button(
+            self.toolbox, text="Process", command=self.process, state=DISABLED)
+        self.process_btn.grid(column=1, row=4)
+
+    def open_image(self):
+        files = filedialog.askopenfilenames(
+            title="Select an image", filetype=[("Images Files", ['*.jpg', '*.jpeg', '*.png', '*.gif'])])
+
+        if files:
+            for file in files:
+                img_file = file
+                img_fname = img_file.split('/')
+                img_fname = img_fname[len(img_fname) - 1]
+                img_file_url = img_file.replace(img_fname, '')
+
+                self.images.append({
+                    'file': img_file,
+                    'name': img_fname,
+                    'url': img_file_url
+                })
+
+                # Append to treeview
+                self.batch_tree.insert(
+                    parent='', index='end', text='', values=(img_fname, '---', img_file))
+
+    def remove_image(self):
+        x = self.batch_tree.selection()[0]
+        self.batch_tree.delete(x)
+
+    def process(self):
+        for item in self.batch_tree.get_children():
+            img = self.batch_tree.item(item)['values']
+            print(item)
+            try:
+                # Process
+                self.process_gpx(img[2])
+                img[1] = 'Success'
+                self.batch_tree.item(item, text="", values=img)
+            except:
+                img[1] = 'Error'
+                self.batch_tree.item(item, text="", values=img)
+
+    def display_item(self, event):
+        print('double click')
+        current = self.batch_tree.focus()
+        item = self.batch_tree.item(current)['values'][2]
+    
+        img_loaded = Image.open(item)
+        img_loaded = img_loaded.resize(
+            (300, 300), Image.ANTIALIAS)
+        img_loaded = ImageTk.PhotoImage(img_loaded)
+
+        self.preview_canvas.create_image(150, 150, image=img_loaded)
+        self.preview_canvas.image = img_loaded
+
     # For read exif date metadatas
-    def read_exif(self):
-        with open(self.img_file, 'rb') as file:
+    def read_exif(self, img):
+        with open(img, 'rb') as file:
             self.img_metas = Exif(file)
 
         if self.img_metas.has_exif:
@@ -118,41 +210,15 @@ class App:
             return False
 
     # For create exif (gps)
-    def create_exif(self, coords):
-        with open(self.img_file, 'rb') as file:
+    def create_exif(self, img, coords):
+        with open(img, 'rb') as file:
             file = Exif(file)
 
             file.gps_latitude = coords['lat']
             file.gps_longitude = coords['lon']
 
-            with open(self.img_file, 'wb') as new_image_file:
+            with open(img, 'wb') as new_image_file:
                 new_image_file.write(file.get_file())
-
-
-    def open_image(self):
-        file = filedialog.askopenfilename(
-            title="Select an image", filetype=[("Images Files", ['*.jpg', '*.jpeg', '*.png', '*.gif'])])
-
-        if file:
-            self.img_file = file
-            self.img_fname = self.img_file.split('/')
-            self.img_fname = self.img_fname[len(self.img_fname) - 1]
-            self.img_file_url = self.img_file.replace(self.img_fname, '')
-            self.image_label.config(text=f'File : {self.img_fname}')
-
-            # Display image on canvas
-            self.img_loaded = Image.open(self.img_file)
-            self.img_loaded = self.img_loaded.resize(
-                (300, 300), Image.ANTIALIAS)
-            self.img_loaded = ImageTk.PhotoImage(self.img_loaded)
-
-            self.preview_canvas.create_image(150, 150, image=self.img_loaded)
-
-            # Increase progress bar
-            self.progress_bar.step(150)
-
-            # Unlock gpx btn
-            self.gpx_btn.config(state=ACTIVE)
 
     def open_gpx(self):
         file = filedialog.askopenfilename(
@@ -160,15 +226,10 @@ class App:
 
         if file:
             self.gpx_file = file
+            self.process_btn.config(state=ACTIVE)
 
-            # Increase progress bar
-            self.progress_bar.step(149)
-
-            # Process
-            self.process_gpx()
-
-    def process_gpx(self):
-        self.img_hour = self.read_exif()
+    def process_gpx(self, img):
+        self.img_hour = self.read_exif(img)
         self.img_hour = datetime.datetime.strptime(self.img_hour, '%Y:%m:%d %H:%M:%S')
 
         # Initialize parsing
@@ -205,15 +266,12 @@ class App:
         coords = nodes[tag_time].attrib
         print(coords)
 
-        app.create_exif(coords)
+        app.create_exif(img, coords)
 
 
 app = App()
 
-# app.create_exif('1234', '5678')
-
 app.set_window_properties()
 app.create_widgets()
-# app.open_image()
-# app.open_gpx()
+app.create_toolbox()
 app.root.mainloop()
