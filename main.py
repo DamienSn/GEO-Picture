@@ -180,9 +180,13 @@ class App:
                 img[1] = 'Error'
                 self.batch_tree.item(item, text="", values=img)
 
-    def display_item(self):
+    def display_item(self, event):
         current = self.batch_tree.focus()
-        item = self.batch_tree.item(current)['values'][2]
+        item = self.batch_tree.item(current)['values']
+        print(item)
+
+        image = PhotoImage(file=item)
+        self.canvas.create_image(150, 150, image)
         
 
     # For read exif date metadatas
