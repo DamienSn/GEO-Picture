@@ -78,7 +78,7 @@ class App:
 
         # Label with image filename
         self.image_label = ttk.Label(
-            self.preview, text="Open an image to enable preview")
+            self.preview, text="Double click on a file on the list to preview it")
         self.image_label.grid(column=0, row=2)
 
     def create_toolbox(self):
@@ -93,12 +93,12 @@ class App:
 
         # Button to open image
         self.image_btn = ttk.Button(
-            self.toolbox, text="Add", command=self.open_image)
+            self.toolbox, text="Add file(s)", command=self.open_image)
         self.image_btn.grid(column=0, row=3)
 
         # Button to remove image
         self.rm_btn = ttk.Button(
-            self.toolbox, text="Remove", command=self.remove_image)
+            self.toolbox, text="Remove file", command=self.remove_image)
         self.rm_btn.grid(column=1, row=3)
 
         self.tree_frame = Frame(self.toolbox)
@@ -144,7 +144,7 @@ class App:
 
     def open_image(self):
         files = filedialog.askopenfilenames(
-            title="Select an image", filetype=[("Images Files", ['*.jpg', '*.jpeg', '*.png', '*.gif'])])
+            title="Select file(s)", filetype=[("Images Files", ['*.jpg', '*.jpeg', '*.png', '*.gif'])])
 
         if files:
             for file in files:
@@ -228,7 +228,7 @@ class App:
 
     def open_gpx(self):
         file = filedialog.askopenfilename(
-            title="Select a GPX", filetype=[("GPX Files", "*.gpx")])
+            title="Select a GPX file", filetype=[("GPX Files", "*.gpx")])
 
         if file:
             self.gpx_file = file
