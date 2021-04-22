@@ -26,51 +26,51 @@ class App:
 
     def create_widgets(self):
         # Configure grid
-        self.root.grid_columnconfigure((0, 1), weight=1)
+        self.root.grid_columnconfigure((0), weight=1)
 
         # Create header frame
         self.header = ttk.Frame(self.root)
-        self.header.grid(column=0, row=0, columnspan=2)
+        self.header.grid(column=0, row=0, columnspan=2, pady=20)
+        self.header.grid_rowconfigure((0, 1), weight=1)
 
         # Create toolbox frame
         self.toolbox = Frame(self.root)
-        self.toolbox.grid(column=0, row=1)
+        self.toolbox.grid(column=0, row=1, pady=20)
+        self.toolbox.grid_columnconfigure((0, 1, 2), weight=1)
+        self.toolbox.grid_rowconfigure((0, 1, 2, 3), weight=1)
 
         # Create image preview frame
         self.preview = Frame(self.root)
-        self.preview.grid(column=1, row=1)
+        self.preview.grid(column=0, row=2, pady=20)
+        self.preview.grid_rowconfigure((0, 1, 2), weight=1)
 
         # Create canvas to display logo
-        self.canvas = Canvas(self.header, width=150, height=150)
-        self.canvas.grid(column=0, row=0, sticky=NSEW)
+        self.canvas = Canvas(self.header, width=100, height=100)
+        self.canvas.grid(column=0, row=0)
 
         # Load and resize logo
         self.logo = Image.open('assets/logo.png')
-        self.logo = self.logo.resize((150, 150), Image.ANTIALIAS)
+        self.logo = self.logo.resize((100, 100), Image.ANTIALIAS)
         self.logo = ImageTk.PhotoImage(self.logo)
 
         # Display logo on canvas
-        self.canvas.create_image(150/2, 150/2, image=self.logo)
+        self.canvas.create_image(50, 50, image=self.logo)
 
         # Add title on header
         self.title = ttk.Label(
             self.header, text="GEO Picture", font=self.title_font)
         self.title.grid(column=0, row=1)
 
-        # Separator between toolbox and preview
-        self.separator = ttk.Separator(self.root, orient=VERTICAL)
-        self.separator.grid(column=1, row=1)
-
         self.preview_title = ttk.Label(
             self.preview, text='Preview', font=['TkDefaultFont', 15])
-        self.preview_title.grid(column=0, row=0, sticky=NSEW)
+        self.preview_title.grid(column=0, row=0)
 
         # Canvas to have preview of choosen picture
         self.preview_canvas = Canvas(self.preview, width=533, height=300)
-        self.preview_canvas.grid(column=0, row=1, sticky=NSEW)
+        self.preview_canvas.grid(column=0, row=1,)
 
         # Load image if not image is choosen
-        self.base_img = Image.open('assets/logo.png')
+        self.base_img = Image.open('assets/img_placeholder.png')
         self.base_img = self.base_img.resize((int(533/2), 300), Image.ANTIALIAS)
         self.base_img = ImageTk.PhotoImage(self.base_img)
 
@@ -85,24 +85,24 @@ class App:
         # Add title to toolbox
         self.toolbox_label = ttk.Label(
             self.toolbox, text="Toolbox", font=['TkDefaultFont', 15])
-        self.toolbox_label.grid(column=0, row=0, columnspan=2)
+        self.toolbox_label.grid(column=0, row=0, columnspan=4)
 
         # Label
         ttk.Label(self.toolbox, text="Open images", font=[
-                  'TkDefaultFont', 11]).grid(row=1, column=0, columnspan=2)
+                  'TkDefaultFont', 11]).grid(row=1, column=0, columnspan=4)
 
         # Button to open image
         self.image_btn = ttk.Button(
             self.toolbox, text="Add", command=self.open_image)
-        self.image_btn.grid(column=0, row=2)
+        self.image_btn.grid(column=0, row=3)
 
         # Button to remove image
         self.rm_btn = ttk.Button(
             self.toolbox, text="Remove", command=self.remove_image)
-        self.rm_btn.grid(column=1, row=2)
+        self.rm_btn.grid(column=1, row=3)
 
         self.tree_frame = Frame(self.toolbox)
-        self.tree_frame.grid(column=0, row=3, columnspan=2, sticky=NSEW)
+        self.tree_frame.grid(column=0, row=2, columnspan=4)
         
         # Treeview scrollbar
         self.tree_scroll = Scrollbar(self.tree_frame)
@@ -135,12 +135,12 @@ class App:
         # Button to bind gpx to image
         self.gpx_btn = ttk.Button(
             self.toolbox, text="Bind GPX", command=self.open_gpx)
-        self.gpx_btn.grid(column=0, row=4)
+        self.gpx_btn.grid(column=2, row=3)
 
         # Button to process
         self.process_btn = ttk.Button(
             self.toolbox, text="Process", command=self.process, state=DISABLED)
-        self.process_btn.grid(column=1, row=4)
+        self.process_btn.grid(column=3, row=3)
 
     def open_image(self):
         files = filedialog.askopenfilenames(
